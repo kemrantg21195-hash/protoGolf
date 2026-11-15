@@ -1,6 +1,6 @@
 using System;
-using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Golf.UI
 {
@@ -8,52 +8,54 @@ namespace Golf.UI
 	{
 		public event Action<bool> onPressChanged;
 
-		private readonly GameObject m_buttonObject;
-		private readonly EventTrigger m_eventTrigger;
+		private Button m_button;
+		private EventTrigger m_eventTrigger;
 
-		public HitButton(GameObject buttonObject, EventTrigger eventTrigger)
+		public HitButton(Button button)
 		{
-			m_buttonObject = buttonObject;
-			m_eventTrigger = eventTrigger;
-			SetupTriggers();
+			m_button = button;
+			m_eventTrigger = m_button.GetComponent<EventTrigger>();
+
+			if (m_eventTrigger == null)
+			{
+				m_eventTrigger = m_button.gameObject.AddComponent<EventTrigger>();
+			}
+
+			InitTriggers();
 		}
 
 		public void Show()
 		{
-			m_buttonObject.SetActive(true);
+			m_button.gameObject.SetActive(true);
 		}
 
 		public void Hide()
 		{
-			m_buttonObject.SetActive(false);
+			m_button.gameObject.SetActive(false);
 			onPressChanged?.Invoke(false);
 		}
 
-		private void SetupTriggers()
+		private void InitTriggers()
 		{
 			m_eventTrigger.triggers.Clear();
 
-			var pointerDownEntry = new EventTrigger.Entry
-			{
-				eventID = EventTriggerType.PointerDown
-			};
-			pointerDownEntry.callback.AddListener(OnPointerDownHandler);
-			m_eventTrigger.triggers.Add(pointerDownEntry);
+			var downEntry = new EventTrigger.Entry();
+			downEntry.eventID = EventTriggerType.PointerDown;
+			downEntry.callback.AddListener(OnPointerDownHandler);
+			m_eventTrigger.triggers.Add(downEntry);
 
-			var pointerUpEntry = new EventTrigger.Entry
-			{
-				eventID = EventTriggerType.PointerUp
-			};
-			pointerUpEntry.callback.AddListener(OnPointerUpHandler);
-			m_eventTrigger.triggers.Add(pointerUpEntry);
+			var upEntry = new EventTrigger.Entry();
+			upEntry.eventID = EventTriggerType.PointerUp;
+			upEntry.callback.AddListener(OnPointerUpHandler);
+			m_eventTrigger.triggers.Add(upEntry);
 		}
 
-		private void OnPointerDownHandler(BaseEventData eventData)
+		private void OnPointerDownHandler(BaseEventData data)
 		{
 			onPressChanged?.Invoke(true);
 		}
 
-		private void OnPointerUpHandler(BaseEventData eventData)
+		private void OnPointerUpHandler(BaseEventData data)
 		{
 			onPressChanged?.Invoke(false);
 		}

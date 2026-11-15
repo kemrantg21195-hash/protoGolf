@@ -5,8 +5,8 @@ namespace Golf.States
 {
 	public class MainMenuState : IGameState
 	{
-		private readonly StateMachine m_stateMachine;
-		private readonly MainMenuView m_mainMenuView;
+		private StateMachine m_stateMachine;
+		private MainMenuView m_mainMenuView;
 
 		public MainMenuState(StateMachine stateMachine, MainMenuView mainMenuView)
 		{
