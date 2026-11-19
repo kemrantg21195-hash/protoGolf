@@ -9,19 +9,16 @@ namespace Golf.States
 	{
 		private StateMachine m_stateMachine;
 		private PauseView m_pauseView;
-		private StoneSpawner m_stoneSpawner;
-		private Hoe m_hoe;
+		private FirstPersonCamera m_firstPersonCamera;
 
 		public PauseState(
 			StateMachine stateMachine,
 			PauseView pauseView,
-			StoneSpawner stoneSpawner,
-			Hoe hoe)
+			FirstPersonCamera firstPersonCamera)
 		{
 			m_stateMachine = stateMachine;
 			m_pauseView = pauseView;
-			m_stoneSpawner = stoneSpawner;
-			m_hoe = hoe;
+			m_firstPersonCamera = firstPersonCamera;
 		}
 
 		public void Enter()
@@ -47,8 +44,7 @@ namespace Golf.States
 
 		private void OnMainMenuClickedHandler()
 		{
-			m_stoneSpawner.ClearStones();
-			m_hoe.ResetToStart();
+			m_firstPersonCamera.ResetToStart();
 			m_stateMachine.ChangeState<MainMenuState>();
 		}
 	}
