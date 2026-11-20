@@ -15,17 +15,16 @@ namespace Golf
 		[SerializeField] private GameObject m_pausePanel;
 		[SerializeField] private Button m_resumeButton;
 		[SerializeField] private Button m_pauseMainMenuButton;
-		[SerializeField] private Rigidbody m_hoeRigidbody;
-		[SerializeField] private Transform m_pointA;
-		[SerializeField] private Transform m_pointB;
-		[SerializeField] private float m_hoeForwardSpeed = 5f;
-		[SerializeField] private float m_hoeReturnSpeed = 3f;
-		[SerializeField] private float m_hoeHitForce = 10f;
-		[SerializeField] private GameObject m_stonePrefab;
-		[SerializeField] private Transform m_stoneSpawnPoint;
-		[SerializeField] private float m_minSpawnDelay = 1f;
-		[SerializeField] private float m_maxSpawnDelay = 3f;
-		[SerializeField] private float m_spawnDecreaseStepMs = 100f;
+		[SerializeField] private Transform m_cameraTransform;
+		[SerializeField] private float m_cameraSensitivity = 0.25f;
+		[SerializeField] private float m_maxHorizontalAngle = 80f;
+		[SerializeField] private float m_minVerticalAngle = -25f;
+		[SerializeField] private float m_maxVerticalAngle = 45f;
+		[SerializeField] private Transform m_cannonBase;
+		[SerializeField] private Transform m_cannonBarrel;
+		[SerializeField] private Transform m_cannonMuzzle;
+		[SerializeField] private GameObject m_cannonballPrefab;
+		[SerializeField] private float m_cannonShootForce = 20f;
 
 		private StateMachine m_stateMachine;
 
@@ -37,24 +36,34 @@ namespace Golf
 			var hitButton = new HitButton(m_hitButton);
 			var pauseView = new PauseView(m_pauseButton, m_pausePanel, m_resumeButton, m_pauseMainMenuButton);
 
-			var hoe = new Hoe(
-				m_hoeRigidbody,
-				m_pointA,
-				m_pointB,
-				m_hoeForwardSpeed,
-				m_hoeReturnSpeed,
-				m_hoeHitForce);
+			var firstPersonCamera = new FirstPersonCamera(
+				m_cameraTransform,
+				m_cameraSensitivity,
+				m_maxHorizontalAngle,
+				m_minVerticalAngle,
+				m_maxVerticalAngle);
 
-			var stoneSpawner = new StoneSpawner(
-				m_stonePrefab,
-				m_stoneSpawnPoint,
-				m_minSpawnDelay,
-				m_maxSpawnDelay,
-				m_spawnDecreaseStepMs);
+			var playerCannon = new PlayerCannon(
+				m_cannonBase,
+				m_cannonBarrel,
+				m_cannonMuzzle,
+				m_cannonballPrefab,
+				m_cannonShootForce);
 
 			var mainMenuState = new MainMenuState(m_stateMachine, mainMenuView);
-			var gamePlayState = new GamePlayState(m_stateMachine, hitButton, pauseView, hoe, stoneSpawner);
-			var pauseState = new PauseState(m_stateMachine, pauseView, stoneSpawner, hoe);
+
+			var gamePlayState = new GamePlayState(
+				m_stateMachine,
+				hitButton,
+				pauseView,
+				firstPersonCamera,
+				playerCannon);
+
+			var pauseState = new PauseState(
+				m_stateMachine,
+				pauseView,
+				firstPersonCamera,
+				playerCannon);
 
 			m_stateMachine.AddState(mainMenuState);
 			m_stateMachine.AddState(gamePlayState);

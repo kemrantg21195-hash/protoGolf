@@ -9,21 +9,21 @@ namespace Golf.States
 		private StateMachine m_stateMachine;
 		private HitButton m_hitButton;
 		private PauseView m_pauseView;
-		private Hoe m_hoe;
-		private StoneSpawner m_stoneSpawner;
+		private FirstPersonCamera m_firstPersonCamera;
+		private PlayerCannon m_playerCannon;
 
 		public GamePlayState(
 			StateMachine stateMachine,
 			HitButton hitButton,
 			PauseView pauseView,
-			Hoe hoe,
-			StoneSpawner stoneSpawner)
+			FirstPersonCamera firstPersonCamera,
+			PlayerCannon playerCannon)
 		{
 			m_stateMachine = stateMachine;
 			m_hitButton = hitButton;
 			m_pauseView = pauseView;
-			m_hoe = hoe;
-			m_stoneSpawner = stoneSpawner;
+			m_firstPersonCamera = firstPersonCamera;
+			m_playerCannon = playerCannon;
 		}
 
 		public void Enter()
@@ -33,12 +33,11 @@ namespace Golf.States
 
 			m_hitButton.Show();
 			m_pauseView.ShowPauseButton();
-			m_stoneSpawner.StartSpawning();
 		}
 
 		public void Exit()
 		{
-			m_stoneSpawner.StopSpawning();
+			m_firstPersonCamera.StopDragging();
 			m_hitButton.onPressChanged -= OnPressChangedHandler;
 			m_pauseView.onPauseClicked -= OnPauseClickedHandler;
 
@@ -48,13 +47,17 @@ namespace Golf.States
 
 		public void Update()
 		{
-			m_hoe.Update();
-			m_stoneSpawner.Update();
+			m_firstPersonCamera.Update();
+			m_playerCannon.UpdateAim(m_firstPersonCamera.yawOffset, m_firstPersonCamera.pitchOffset);
+			m_playerCannon.Update();
 		}
 
 		private void OnPressChangedHandler(bool isPressed)
 		{
-			m_hoe.SetPressed(isPressed);
+			if (isPressed)
+			{
+				m_playerCannon.Shoot();
+			}
 		}
 
 		private void OnPauseClickedHandler()
