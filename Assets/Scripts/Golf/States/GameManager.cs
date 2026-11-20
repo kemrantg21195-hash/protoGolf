@@ -20,6 +20,11 @@ namespace Golf
 		[SerializeField] private float m_maxHorizontalAngle = 80f;
 		[SerializeField] private float m_minVerticalAngle = -25f;
 		[SerializeField] private float m_maxVerticalAngle = 45f;
+		[SerializeField] private Transform m_cannonBase;
+		[SerializeField] private Transform m_cannonBarrel;
+		[SerializeField] private Transform m_cannonMuzzle;
+		[SerializeField] private GameObject m_cannonballPrefab;
+		[SerializeField] private float m_cannonShootForce = 20f;
 
 		private StateMachine m_stateMachine;
 
@@ -38,18 +43,27 @@ namespace Golf
 				m_minVerticalAngle,
 				m_maxVerticalAngle);
 
+			var playerCannon = new PlayerCannon(
+				m_cannonBase,
+				m_cannonBarrel,
+				m_cannonMuzzle,
+				m_cannonballPrefab,
+				m_cannonShootForce);
+
 			var mainMenuState = new MainMenuState(m_stateMachine, mainMenuView);
 
 			var gamePlayState = new GamePlayState(
 				m_stateMachine,
 				hitButton,
 				pauseView,
-				firstPersonCamera);
+				firstPersonCamera,
+				playerCannon);
 
 			var pauseState = new PauseState(
 				m_stateMachine,
 				pauseView,
-				firstPersonCamera);
+				firstPersonCamera,
+				playerCannon);
 
 			m_stateMachine.AddState(mainMenuState);
 			m_stateMachine.AddState(gamePlayState);
