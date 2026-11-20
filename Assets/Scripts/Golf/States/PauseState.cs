@@ -10,15 +10,18 @@ namespace Golf.States
 		private StateMachine m_stateMachine;
 		private PauseView m_pauseView;
 		private FirstPersonCamera m_firstPersonCamera;
+		private PlayerCannon m_playerCannon;
 
 		public PauseState(
 			StateMachine stateMachine,
 			PauseView pauseView,
-			FirstPersonCamera firstPersonCamera)
+			FirstPersonCamera firstPersonCamera,
+			PlayerCannon playerCannon)
 		{
 			m_stateMachine = stateMachine;
 			m_pauseView = pauseView;
 			m_firstPersonCamera = firstPersonCamera;
+			m_playerCannon = playerCannon;
 		}
 
 		public void Enter()
@@ -44,6 +47,8 @@ namespace Golf.States
 
 		private void OnMainMenuClickedHandler()
 		{
+			m_playerCannon.ClearCannonballs();
+			m_playerCannon.ResetToStart();
 			m_firstPersonCamera.ResetToStart();
 			m_stateMachine.ChangeState<MainMenuState>();
 		}

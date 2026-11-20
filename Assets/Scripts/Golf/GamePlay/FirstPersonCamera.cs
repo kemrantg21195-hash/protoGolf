@@ -6,6 +6,9 @@ namespace Golf.GamePlay
 {
 	public class FirstPersonCamera : IUpdatable
 	{
+		public float yawOffset => m_yawOffset;
+		public float pitchOffset => m_pitchOffset;
+
 		private Transform m_cameraTransform;
 		private float m_sensitivity;
 		private float m_maxHorizontalAngle;
