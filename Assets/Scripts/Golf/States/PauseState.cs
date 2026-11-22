@@ -11,17 +11,26 @@ namespace Golf.States
 		private PauseView m_pauseView;
 		private FirstPersonCamera m_firstPersonCamera;
 		private PlayerCannon m_playerCannon;
+		private ShipMover m_shipMover;
+		private EnemySpawner m_enemySpawner;
+		private PlayerShipHealth m_playerHealth;
 
 		public PauseState(
 			StateMachine stateMachine,
 			PauseView pauseView,
 			FirstPersonCamera firstPersonCamera,
-			PlayerCannon playerCannon)
+			PlayerCannon playerCannon,
+			ShipMover shipMover,
+			EnemySpawner enemySpawner,
+			PlayerShipHealth playerHealth)
 		{
 			m_stateMachine = stateMachine;
 			m_pauseView = pauseView;
 			m_firstPersonCamera = firstPersonCamera;
 			m_playerCannon = playerCannon;
+			m_shipMover = shipMover;
+			m_enemySpawner = enemySpawner;
+			m_playerHealth = playerHealth;
 		}
 
 		public void Enter()
@@ -50,6 +59,9 @@ namespace Golf.States
 			m_playerCannon.ClearCannonballs();
 			m_playerCannon.ResetToStart();
 			m_firstPersonCamera.ResetToStart();
+			m_shipMover.ResetToStart();
+			m_enemySpawner.ClearAll();
+			m_playerHealth.ResetHealth();
 			m_stateMachine.ChangeState<MainMenuState>();
 		}
 	}

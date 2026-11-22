@@ -6,15 +6,31 @@ namespace Golf.GamePlay
 {
 	public class PlayerCannon : IUpdatable
 	{
+		public bool isCharging => m_isCharging;
+		public bool isReloading => m_reloadTimer > 0f;
+		public float chargeProgress => m_maxChargeTime > 0f
+			? Mathf.Clamp01(m_chargeTimer / m_maxChargeTime)
+			: 1f;
+		public float reloadProgress => m_reloadDuration > 0f
+			? 1f - Mathf.Clamp01(m_reloadTimer / m_reloadDuration)
+			: 1f;
+
+		public IReadOnlyList<Cannonball> cannonballs => m_cannonballs;
 		private Transform m_cannonBase;
 		private Transform m_cannonBarrel;
 		private Transform m_muzzlePoint;
 		private GameObject m_cannonballPrefab;
-		private float m_shootForce;
+		private float m_minShootForce;
+		private float m_maxShootForce;
+		private float m_maxChargeTime;
+		private float m_reloadDuration;
 		private float m_startBaseYaw;
 		private float m_startBasePitch;
 		private float m_startBarrelYaw;
 		private float m_startBarrelPitch;
+		private float m_chargeTimer;
+		private float m_reloadTimer;
+		private bool m_isCharging;
 		private List<Cannonball> m_cannonballs = new();
 
 		public PlayerCannon(
@@ -22,13 +38,19 @@ namespace Golf.GamePlay
 			Transform cannonBarrel,
 			Transform muzzlePoint,
 			GameObject cannonballPrefab,
-			float shootForce)
+			float minShootForce,
+			float maxShootForce,
+			float maxChargeTime,
+			float reloadDuration)
 		{
 			m_cannonBase = cannonBase;
 			m_cannonBarrel = cannonBarrel;
 			m_muzzlePoint = muzzlePoint;
 			m_cannonballPrefab = cannonballPrefab;
-			m_shootForce = shootForce;
+			m_minShootForce = minShootForce;
+			m_maxShootForce = maxShootForce;
+			m_maxChargeTime = maxChargeTime;
+			m_reloadDuration = reloadDuration;
 
 			Vector3 baseAngles = m_cannonBase.localEulerAngles;
 			m_startBaseYaw = baseAngles.y;
@@ -63,25 +85,53 @@ namespace Golf.GamePlay
 
 		public void ResetToStart()
 		{
+			CancelCharge();
+			m_reloadTimer = 0f;
 			UpdateAim(0f, 0f);
 		}
 
-		public void Shoot()
+		public void StartCharging()
 		{
-			GameObject ballObject = Object.Instantiate(
-				m_cannonballPrefab,
-				m_muzzlePoint.position,
-				m_muzzlePoint.rotation);
+			if (isReloading)
+			{
+				return;
+			}
 
-			Rigidbody rb = ballObject.GetComponentInChildren<Rigidbody>();
+			m_isCharging = true;
+			m_chargeTimer = 0f;
+		}
 
-			var cannonball = new Cannonball(ballObject, rb);
-			cannonball.Launch(m_muzzlePoint.forward * m_shootForce);
-			m_cannonballs.Add(cannonball);
+		public void ReleaseAndShoot()
+		{
+			if (!m_isCharging || isReloading)
+			{
+				return;
+			}
+
+			float shootForce = Mathf.Lerp(m_minShootForce, m_maxShootForce, chargeProgress);
+			CancelCharge();
+			Shoot(shootForce);
+			m_reloadTimer = m_reloadDuration;
+		}
+
+		public void CancelCharge()
+		{
+			m_isCharging = false;
+			m_chargeTimer = 0f;
 		}
 
 		public void Update()
 		{
+			if (m_reloadTimer > 0f)
+			{
+				m_reloadTimer -= Time.deltaTime;
+			}
+
+			if (m_isCharging)
+			{
+				m_chargeTimer += Time.deltaTime;
+			}
+
 			for (int i = m_cannonballs.Count - 1; i >= 0; i--)
 			{
 				Cannonball ball = m_cannonballs[i];
@@ -103,6 +153,20 @@ namespace Golf.GamePlay
 			}
 
 			m_cannonballs.Clear();
+		}
+
+		private void Shoot(float shootForce)
+		{
+			GameObject ballObject = Object.Instantiate(
+				m_cannonballPrefab,
+				m_muzzlePoint.position,
+				m_muzzlePoint.rotation);
+
+			Rigidbody rb = ballObject.GetComponentInChildren<Rigidbody>();
+
+			var cannonball = new Cannonball(ballObject, rb);
+			cannonball.Launch(m_muzzlePoint.forward * shootForce);
+			m_cannonballs.Add(cannonball);
 		}
 	}
 }

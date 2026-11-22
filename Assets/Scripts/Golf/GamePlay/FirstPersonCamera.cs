@@ -18,7 +18,8 @@ namespace Golf.GamePlay
 		private float m_startPitch;
 		private float m_yawOffset;
 		private float m_pitchOffset;
-		private Vector3 m_lastPointerPosition;
+		private Vector2 m_lastPointerPosition;
+		private int m_activeFingerId = -1;
 		private bool m_isDragging;
 
 		public FirstPersonCamera(
@@ -42,11 +43,12 @@ namespace Golf.GamePlay
 		public void StopDragging()
 		{
 			m_isDragging = false;
+			m_activeFingerId = -1;
 		}
 
 		public void ResetToStart()
 		{
-			m_isDragging = false;
+			StopDragging();
 			m_yawOffset = 0f;
 			m_pitchOffset = 0f;
 			m_cameraTransform.localEulerAngles = new Vector3(m_startPitch, m_startYaw, 0f);
@@ -54,9 +56,78 @@ namespace Golf.GamePlay
 
 		public void Update()
 		{
+			if (Input.touchCount > 0)
+			{
+				UpdateTouchInput();
+			}
+			else
+			{
+				UpdateMouseInput();
+			}
+		}
+
+		private void UpdateTouchInput()
+		{
+			if (!m_isDragging)
+			{
+				for (int i = 0; i < Input.touchCount; i++)
+				{
+					Touch touch = Input.GetTouch(i);
+
+					if (touch.phase == TouchPhase.Began && !IsPointerOverUI(touch.fingerId))
+					{
+						m_isDragging = true;
+						m_activeFingerId = touch.fingerId;
+						m_lastPointerPosition = touch.position;
+						break;
+					}
+				}
+
+				return;
+			}
+
+			bool foundActiveTouch = false;
+
+			for (int i = 0; i < Input.touchCount; i++)
+			{
+				Touch touch = Input.GetTouch(i);
+
+				if (touch.fingerId != m_activeFingerId)
+				{
+					continue;
+				}
+
+				foundActiveTouch = true;
+
+				if (touch.phase == TouchPhase.Moved)
+				{
+					Vector2 delta = touch.position - m_lastPointerPosition;
+					m_lastPointerPosition = touch.position;
+					ApplyRotationDelta(delta);
+				}
+				else if (touch.phase == TouchPhase.Stationary)
+				{
+					m_lastPointerPosition = touch.position;
+				}
+				else if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+				{
+					StopDragging();
+				}
+
+				break;
+			}
+
+			if (!foundActiveTouch)
+			{
+				StopDragging();
+			}
+		}
+
+		private void UpdateMouseInput()
+		{
 			if (Input.GetMouseButtonDown(0))
 			{
-				if (!IsPointerOverUI())
+				if (!IsPointerOverUI(-1))
 				{
 					m_isDragging = true;
 					m_lastPointerPosition = Input.mousePosition;
@@ -70,32 +141,37 @@ namespace Golf.GamePlay
 
 			if (m_isDragging && Input.GetMouseButton(0))
 			{
-				Vector3 delta = Input.mousePosition - m_lastPointerPosition;
-				m_lastPointerPosition = Input.mousePosition;
-
-				m_yawOffset += delta.x * m_sensitivity;
-				m_pitchOffset -= delta.y * m_sensitivity;
-
-				m_yawOffset = Mathf.Clamp(m_yawOffset, -m_maxHorizontalAngle, m_maxHorizontalAngle);
-				m_pitchOffset = Mathf.Clamp(m_pitchOffset, m_minVerticalAngle, m_maxVerticalAngle);
-
-				m_cameraTransform.localEulerAngles = new Vector3(
-					m_startPitch + m_pitchOffset,
-					m_startYaw + m_yawOffset,
-					0f);
+				Vector2 currentPosition = Input.mousePosition;
+				Vector2 delta = currentPosition - m_lastPointerPosition;
+				m_lastPointerPosition = currentPosition;
+				ApplyRotationDelta(delta);
 			}
 		}
 
-		private bool IsPointerOverUI()
+		private void ApplyRotationDelta(Vector2 delta)
+		{
+			m_yawOffset += delta.x * m_sensitivity;
+			m_pitchOffset -= delta.y * m_sensitivity;
+
+			m_yawOffset = Mathf.Clamp(m_yawOffset, -m_maxHorizontalAngle, m_maxHorizontalAngle);
+			m_pitchOffset = Mathf.Clamp(m_pitchOffset, m_minVerticalAngle, m_maxVerticalAngle);
+
+			m_cameraTransform.localEulerAngles = new Vector3(
+				m_startPitch + m_pitchOffset,
+				m_startYaw + m_yawOffset,
+				0f);
+		}
+
+		private bool IsPointerOverUI(int fingerId)
 		{
 			if (EventSystem.current == null)
 			{
 				return false;
 			}
 
-			if (Input.touchCount > 0)
+			if (fingerId >= 0)
 			{
-				return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+				return EventSystem.current.IsPointerOverGameObject(fingerId);
 			}
 
 			return EventSystem.current.IsPointerOverGameObject();

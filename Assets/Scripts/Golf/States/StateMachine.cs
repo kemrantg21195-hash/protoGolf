@@ -4,11 +4,12 @@ using Golf.States.Interfaces;
 
 namespace Golf.States
 {
-	public class StateMachine : IUpdatable
+	public class StateMachine : IUpdatable, IFixedUpdatable
 	{
 		private Dictionary<Type, IGameState> m_states = new();
 		private IGameState m_currentState;
 		private IUpdatable m_currentUpdatable;
+		private IFixedUpdatable m_currentFixedUpdatable;
 
 		public void AddState<TState>(TState state) where TState : IGameState
 		{
@@ -22,6 +23,7 @@ namespace Golf.States
 				m_currentState?.Exit();
 				m_currentState = state;
 				m_currentUpdatable = m_currentState as IUpdatable;
+				m_currentFixedUpdatable = m_currentState as IFixedUpdatable;
 				m_currentState.Enter();
 			}
 		}
@@ -29,6 +31,11 @@ namespace Golf.States
 		public void Update()
 		{
 			m_currentUpdatable?.Update();
+		}
+
+		public void FixedUpdate()
+		{
+			m_currentFixedUpdatable?.FixedUpdate();
 		}
 	}
 }
