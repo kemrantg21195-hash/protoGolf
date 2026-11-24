@@ -14,6 +14,7 @@ namespace Golf
 		[SerializeField] private Button m_mainMenuSettingsButton;
 		[SerializeField] private TMP_Text m_bestScoreText;
 		[SerializeField] private Button m_hitButton;
+		[SerializeField] private Button m_ammoSwitchButton;
 		[SerializeField] private Button m_pauseButton;
 		[SerializeField] private TMP_Text m_hudScoreText;
 		[SerializeField] private GameObject m_pausePanel;
@@ -45,6 +46,9 @@ namespace Golf
 		[SerializeField] private float m_maxShootForce = 32f;
 		[SerializeField] private float m_maxChargeTime = 1.5f;
 		[SerializeField] private float m_reloadDuration = 2f;
+		[SerializeField] private float m_heavyRangeMultiplier = 0.5f;
+		[SerializeField] private int m_heavyDamageMultiplier = 2;
+		[SerializeField] private float m_heavyChargeSpeedMultiplier = 1.5f;
 		[SerializeField] private Collider m_seaCollider;
 		[SerializeField] private Rigidbody m_playerShipRigidbody;
 		[SerializeField] private int m_playerMaxHealth = 5;
@@ -72,6 +76,7 @@ namespace Golf
 		[SerializeField] private AudioClip m_seaAmbientClip;
 		[SerializeField] private AudioClip m_cannonShootClip;
 		[SerializeField] private AudioClip m_hitClip;
+		[SerializeField] [Range(0f, 1f)] private float m_hitVolumeScale = 0.4f;
 
 		private StateMachine m_stateMachine;
 		private AudioPlayer m_audioPlayer;
@@ -91,6 +96,7 @@ namespace Golf
 				m_seaAmbientClip,
 				m_cannonShootClip,
 				m_hitClip,
+				m_hitVolumeScale,
 				gameSettings.soundVolume);
 
 			var mainMenuView = new MainMenuView(
@@ -99,6 +105,7 @@ namespace Golf
 				m_mainMenuSettingsButton,
 				m_bestScoreText);
 			var hitButton = new HitButton(m_hitButton);
+			var ammoSwitchView = new AmmoSwitchView(m_ammoSwitchButton);
 			var pauseView = new PauseView(
 				m_pauseButton,
 				m_pausePanel,
@@ -132,7 +139,10 @@ namespace Golf
 				m_maxShootForce,
 				m_maxChargeTime,
 				m_reloadDuration,
-				m_seaCollider);
+				m_seaCollider,
+				m_heavyRangeMultiplier,
+				m_heavyDamageMultiplier,
+				m_heavyChargeSpeedMultiplier);
 
 			var shipMover = new ShipMover(
 				m_playerShipRigidbody,
@@ -178,6 +188,7 @@ namespace Golf
 			var gamePlayState = new GamePlayState(
 				m_stateMachine,
 				hitButton,
+				ammoSwitchView,
 				pauseView,
 				scoreView,
 				firstPersonCamera,
@@ -230,6 +241,12 @@ namespace Golf
 		private void Start()
 		{
 			m_hitButton.gameObject.SetActive(false);
+
+			if (m_ammoSwitchButton != null)
+			{
+				m_ammoSwitchButton.gameObject.SetActive(false);
+			}
+
 			m_pauseButton.gameObject.SetActive(false);
 
 			if (m_hudScoreText != null)

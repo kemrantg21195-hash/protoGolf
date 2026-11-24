@@ -8,6 +8,7 @@ namespace Golf.States
 	{
 		private StateMachine m_stateMachine;
 		private HitButton m_hitButton;
+		private AmmoSwitchView m_ammoSwitchView;
 		private PauseView m_pauseView;
 		private ScoreView m_scoreView;
 		private FirstPersonCamera m_firstPersonCamera;
@@ -21,6 +22,7 @@ namespace Golf.States
 		public GamePlayState(
 			StateMachine stateMachine,
 			HitButton hitButton,
+			AmmoSwitchView ammoSwitchView,
 			PauseView pauseView,
 			ScoreView scoreView,
 			FirstPersonCamera firstPersonCamera,
@@ -33,6 +35,7 @@ namespace Golf.States
 		{
 			m_stateMachine = stateMachine;
 			m_hitButton = hitButton;
+			m_ammoSwitchView = ammoSwitchView;
 			m_pauseView = pauseView;
 			m_scoreView = scoreView;
 			m_firstPersonCamera = firstPersonCamera;
@@ -47,9 +50,11 @@ namespace Golf.States
 		public void Enter()
 		{
 			m_hitButton.onPressChanged += OnPressChangedHandler;
+			m_ammoSwitchView.onSwitchClicked += OnAmmoSwitchClickedHandler;
 			m_pauseView.onPauseClicked += OnPauseClickedHandler;
 			m_shipMover.onPortReached += OnPortReachedHandler;
 			m_playerCannon.onShot += OnPlayerShotHandler;
+			m_playerCannon.onAmmoChanged += OnAmmoChangedHandler;
 			m_enemySpawner.onEnemyShot += OnEnemyShotHandler;
 			m_enemySpawner.onEnemyHit += OnEnemyHitHandler;
 			m_enemySpawner.onEnemySunk += OnEnemySunkHandler;
@@ -58,6 +63,7 @@ namespace Golf.States
 			m_scoreCounter.onScoreChanged += OnScoreChangedHandler;
 
 			m_hitButton.Show();
+			m_ammoSwitchView.Show(m_playerCannon.currentAmmoType);
 			m_pauseView.ShowPauseButton();
 			m_scoreView.Show(m_scoreCounter.currentScore);
 		}
@@ -67,9 +73,11 @@ namespace Golf.States
 			m_firstPersonCamera.StopDragging();
 			m_playerCannon.CancelCharge();
 			m_hitButton.onPressChanged -= OnPressChangedHandler;
+			m_ammoSwitchView.onSwitchClicked -= OnAmmoSwitchClickedHandler;
 			m_pauseView.onPauseClicked -= OnPauseClickedHandler;
 			m_shipMover.onPortReached -= OnPortReachedHandler;
 			m_playerCannon.onShot -= OnPlayerShotHandler;
+			m_playerCannon.onAmmoChanged -= OnAmmoChangedHandler;
 			m_enemySpawner.onEnemyShot -= OnEnemyShotHandler;
 			m_enemySpawner.onEnemyHit -= OnEnemyHitHandler;
 			m_enemySpawner.onEnemySunk -= OnEnemySunkHandler;
@@ -78,6 +86,7 @@ namespace Golf.States
 			m_scoreCounter.onScoreChanged -= OnScoreChangedHandler;
 
 			m_hitButton.Hide();
+			m_ammoSwitchView.Hide();
 			m_pauseView.HidePauseButton();
 			m_scoreView.Hide();
 		}
@@ -106,6 +115,16 @@ namespace Golf.States
 			{
 				m_playerCannon.ReleaseAndShoot();
 			}
+		}
+
+		private void OnAmmoSwitchClickedHandler()
+		{
+			m_playerCannon.ToggleAmmo();
+		}
+
+		private void OnAmmoChangedHandler(AmmoType ammoType)
+		{
+			m_ammoSwitchView.UpdateAmmoType(ammoType);
 		}
 
 		private void OnPauseClickedHandler()

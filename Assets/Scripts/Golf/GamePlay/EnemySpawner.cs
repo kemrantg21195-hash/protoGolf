@@ -273,7 +273,7 @@ namespace Golf.GamePlay
 						float dz = ball.position.z - ball.launchPosition.z;
 						float shotDistance = Mathf.Sqrt(dx * dx + dz * dz);
 
-						enemy.TakeDamage(1);
+						enemy.TakeDamage(ball.damage);
 						ball.Expire();
 						onEnemyHit?.Invoke(shotDistance);
 

@@ -8,19 +8,26 @@ namespace Golf.GamePlay
 		public bool isValid => m_gameObject != null && m_lifeTime > 0f;
 		public Vector3 position => m_gameObject != null ? m_gameObject.transform.position : Vector3.zero;
 		public Vector3 launchPosition => m_launchPosition;
+		public int damage => m_damage;
 
 		private GameObject m_gameObject;
 		private Rigidbody m_rigidbody;
 		private Collider m_seaCollider;
 		private Vector3 m_launchPosition;
+		private int m_damage;
 		private float m_radius;
 		private float m_lifeTime = 5f;
 
-		public Cannonball(GameObject gameObject, Rigidbody rigidbody, Collider seaCollider = null)
+		public Cannonball(
+			GameObject gameObject,
+			Rigidbody rigidbody,
+			Collider seaCollider = null,
+			int damage = 1)
 		{
 			m_gameObject = gameObject;
 			m_rigidbody = rigidbody;
 			m_seaCollider = seaCollider;
+			m_damage = damage;
 			m_launchPosition = gameObject != null ? gameObject.transform.position : Vector3.zero;
 			m_radius = CalculateRadius(gameObject);
 		}

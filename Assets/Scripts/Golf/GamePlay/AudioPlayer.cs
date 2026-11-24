@@ -9,6 +9,7 @@ namespace Golf.GamePlay
 		private AudioClip m_seaClip;
 		private AudioClip m_shootClip;
 		private AudioClip m_hitClip;
+		private float m_hitVolumeScale;
 		private float m_volume;
 
 		public AudioPlayer(
@@ -17,6 +18,7 @@ namespace Golf.GamePlay
 			AudioClip seaClip,
 			AudioClip shootClip,
 			AudioClip hitClip,
+			float hitVolumeScale,
 			float initialVolume)
 		{
 			m_seaSource = seaSource;
@@ -24,6 +26,7 @@ namespace Golf.GamePlay
 			m_seaClip = seaClip;
 			m_shootClip = shootClip;
 			m_hitClip = hitClip;
+			m_hitVolumeScale = Mathf.Clamp01(hitVolumeScale);
 			SetVolume(initialVolume);
 		}
 
@@ -74,7 +77,7 @@ namespace Golf.GamePlay
 
 		public void PlayHit()
 		{
-			PlaySfx(m_hitClip, 0.3f);
+			PlaySfx(m_hitClip, m_hitVolumeScale);
 		}
 
 		private void PlaySfx(AudioClip clip, float volumeScale)

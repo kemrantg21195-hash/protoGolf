@@ -8,7 +8,9 @@ namespace Golf.GamePlay
 	public class PlayerCannon : IUpdatable
 	{
 		public event Action onShot;
+		public event Action<AmmoType> onAmmoChanged;
 
+		public AmmoType currentAmmoType => m_currentAmmoType;
 		public bool isCharging => m_isCharging;
 		public bool isReloading => m_reloadTimer > 0f;
 		public float chargeProgress => m_maxChargeTime > 0f
@@ -28,6 +30,10 @@ namespace Golf.GamePlay
 		private float m_maxChargeTime;
 		private float m_reloadDuration;
 		private Collider m_seaCollider;
+		private float m_heavyRangeMultiplier;
+		private int m_heavyDamageMultiplier;
+		private float m_heavyChargeSpeedMultiplier;
+		private AmmoType m_currentAmmoType;
 		private float m_startBaseYaw;
 		private float m_startBasePitch;
 		private float m_startBarrelYaw;
@@ -46,7 +52,10 @@ namespace Golf.GamePlay
 			float maxShootForce,
 			float maxChargeTime,
 			float reloadDuration,
-			Collider seaCollider = null)
+			Collider seaCollider = null,
+			float heavyRangeMultiplier = 0.5f,
+			int heavyDamageMultiplier = 2,
+			float heavyChargeSpeedMultiplier = 1.5f)
 		{
 			m_cannonBase = cannonBase;
 			m_cannonBarrel = cannonBarrel;
@@ -57,6 +66,10 @@ namespace Golf.GamePlay
 			m_maxChargeTime = maxChargeTime;
 			m_reloadDuration = reloadDuration;
 			m_seaCollider = seaCollider;
+			m_heavyRangeMultiplier = heavyRangeMultiplier;
+			m_heavyDamageMultiplier = heavyDamageMultiplier;
+			m_heavyChargeSpeedMultiplier = heavyChargeSpeedMultiplier;
+			m_currentAmmoType = AmmoType.Standard;
 
 			Vector3 baseAngles = m_cannonBase.localEulerAngles;
 			m_startBaseYaw = baseAngles.y;
@@ -65,6 +78,14 @@ namespace Golf.GamePlay
 			Vector3 barrelAngles = m_cannonBarrel.localEulerAngles;
 			m_startBarrelYaw = barrelAngles.y;
 			m_startBarrelPitch = barrelAngles.x > 180f ? barrelAngles.x - 360f : barrelAngles.x;
+		}
+
+		public void ToggleAmmo()
+		{
+			m_currentAmmoType = m_currentAmmoType == AmmoType.Standard
+				? AmmoType.Heavy
+				: AmmoType.Standard;
+			onAmmoChanged?.Invoke(m_currentAmmoType);
 		}
 
 		public void UpdateAim(float yawOffset, float pitchOffset)
@@ -93,6 +114,8 @@ namespace Golf.GamePlay
 		{
 			CancelCharge();
 			m_reloadTimer = 0f;
+			m_currentAmmoType = AmmoType.Standard;
+			onAmmoChanged?.Invoke(m_currentAmmoType);
 			UpdateAim(0f, 0f);
 		}
 
@@ -135,7 +158,10 @@ namespace Golf.GamePlay
 
 			if (m_isCharging)
 			{
-				m_chargeTimer += Time.deltaTime;
+				float chargeSpeedMultiplier = m_currentAmmoType == AmmoType.Heavy
+					? m_heavyChargeSpeedMultiplier
+					: 1f;
+				m_chargeTimer += Time.deltaTime * chargeSpeedMultiplier;
 			}
 
 			for (int i = m_cannonballs.Count - 1; i >= 0; i--)
@@ -163,6 +189,13 @@ namespace Golf.GamePlay
 
 		private void Shoot(float shootForce)
 		{
+			float forceMultiplier = m_currentAmmoType == AmmoType.Heavy
+				? Mathf.Sqrt(Mathf.Max(0.01f, m_heavyRangeMultiplier))
+				: 1f;
+			int damage = m_currentAmmoType == AmmoType.Heavy
+				? m_heavyDamageMultiplier
+				: 1;
+
 			GameObject ballObject = UnityEngine.Object.Instantiate(
 				m_cannonballPrefab,
 				m_muzzlePoint.position,
@@ -170,8 +203,8 @@ namespace Golf.GamePlay
 
 			Rigidbody rb = ballObject.GetComponentInChildren<Rigidbody>();
 
-			var cannonball = new Cannonball(ballObject, rb, m_seaCollider);
-			cannonball.Launch(m_muzzlePoint.forward * shootForce);
+			var cannonball = new Cannonball(ballObject, rb, m_seaCollider, damage);
+			cannonball.Launch(m_muzzlePoint.forward * (shootForce * forceMultiplier));
 			m_cannonballs.Add(cannonball);
 			onShot?.Invoke();
 		}
