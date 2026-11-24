@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Golf.States.Interfaces;
 using UnityEngine;
@@ -6,6 +7,8 @@ namespace Golf.GamePlay
 {
 	public class PlayerCannon : IUpdatable
 	{
+		public event Action onShot;
+
 		public bool isCharging => m_isCharging;
 		public bool isReloading => m_reloadTimer > 0f;
 		public float chargeProgress => m_maxChargeTime > 0f
@@ -14,8 +17,8 @@ namespace Golf.GamePlay
 		public float reloadProgress => m_reloadDuration > 0f
 			? 1f - Mathf.Clamp01(m_reloadTimer / m_reloadDuration)
 			: 1f;
-
 		public IReadOnlyList<Cannonball> cannonballs => m_cannonballs;
+
 		private Transform m_cannonBase;
 		private Transform m_cannonBarrel;
 		private Transform m_muzzlePoint;
@@ -24,6 +27,7 @@ namespace Golf.GamePlay
 		private float m_maxShootForce;
 		private float m_maxChargeTime;
 		private float m_reloadDuration;
+		private Collider m_seaCollider;
 		private float m_startBaseYaw;
 		private float m_startBasePitch;
 		private float m_startBarrelYaw;
@@ -41,7 +45,8 @@ namespace Golf.GamePlay
 			float minShootForce,
 			float maxShootForce,
 			float maxChargeTime,
-			float reloadDuration)
+			float reloadDuration,
+			Collider seaCollider = null)
 		{
 			m_cannonBase = cannonBase;
 			m_cannonBarrel = cannonBarrel;
@@ -51,6 +56,7 @@ namespace Golf.GamePlay
 			m_maxShootForce = maxShootForce;
 			m_maxChargeTime = maxChargeTime;
 			m_reloadDuration = reloadDuration;
+			m_seaCollider = seaCollider;
 
 			Vector3 baseAngles = m_cannonBase.localEulerAngles;
 			m_startBaseYaw = baseAngles.y;
@@ -157,16 +163,17 @@ namespace Golf.GamePlay
 
 		private void Shoot(float shootForce)
 		{
-			GameObject ballObject = Object.Instantiate(
+			GameObject ballObject = UnityEngine.Object.Instantiate(
 				m_cannonballPrefab,
 				m_muzzlePoint.position,
 				m_muzzlePoint.rotation);
 
 			Rigidbody rb = ballObject.GetComponentInChildren<Rigidbody>();
 
-			var cannonball = new Cannonball(ballObject, rb);
+			var cannonball = new Cannonball(ballObject, rb, m_seaCollider);
 			cannonball.Launch(m_muzzlePoint.forward * shootForce);
 			m_cannonballs.Add(cannonball);
+			onShot?.Invoke();
 		}
 	}
 }

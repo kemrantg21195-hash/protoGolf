@@ -7,6 +7,8 @@ namespace Golf.GamePlay
 {
 	public class EnemySpawner : IUpdatable
 	{
+		public event Action onEnemyShot;
+		public event Action<float> onEnemyHit;
 		public event Action onEnemySunk;
 		public event Action onPlayerHit;
 
@@ -16,13 +18,18 @@ namespace Golf.GamePlay
 		private Transform m_playerShipTransform;
 		private Collider[] m_playerColliders;
 		private GameObject m_cannonballPrefab;
+		private Collider m_seaCollider;
 		private float m_spawnTriggerDistance;
-		private int m_enemyHealth;
+		private int m_baseEnemyHealth;
 		private float m_enemyMoveSpeed;
 		private float m_enemyTurnSpeed;
 		private float m_enemyCombatDistance;
-		private float m_enemyShootRange;
-		private float m_enemyShootInterval;
+		private float m_baseEnemyShootRange;
+		private float m_baseEnemyShootInterval;
+		private BotDifficulty m_difficulty;
+		private int m_hardExtraHealth;
+		private float m_hardShootRangeMultiplier;
+		private float m_hardShootIntervalMultiplier;
 		private List<EnemyShip> m_enemies = new();
 		private List<Cannonball> m_enemyCannonballs = new();
 
@@ -37,7 +44,12 @@ namespace Golf.GamePlay
 			float enemyTurnSpeed,
 			float enemyCombatDistance,
 			float enemyShootRange,
-			float enemyShootInterval)
+			float enemyShootInterval,
+			BotDifficulty difficulty,
+			int hardExtraHealth,
+			float hardShootRangeMultiplier,
+			float hardShootIntervalMultiplier,
+			Collider seaCollider = null)
 		{
 			m_enemyPrefab = enemyPrefab;
 			m_spawnPoints = spawnPoints;
@@ -45,13 +57,23 @@ namespace Golf.GamePlay
 			m_playerShipTransform = playerShipTransform;
 			m_playerColliders = playerShipTransform.GetComponentsInChildren<Collider>();
 			m_cannonballPrefab = cannonballPrefab;
+			m_seaCollider = seaCollider;
 			m_spawnTriggerDistance = spawnTriggerDistance;
-			m_enemyHealth = enemyHealth;
+			m_baseEnemyHealth = enemyHealth;
 			m_enemyMoveSpeed = enemyMoveSpeed;
 			m_enemyTurnSpeed = enemyTurnSpeed;
 			m_enemyCombatDistance = enemyCombatDistance;
-			m_enemyShootRange = enemyShootRange;
-			m_enemyShootInterval = enemyShootInterval;
+			m_baseEnemyShootRange = enemyShootRange;
+			m_baseEnemyShootInterval = enemyShootInterval;
+			m_difficulty = difficulty;
+			m_hardExtraHealth = hardExtraHealth;
+			m_hardShootRangeMultiplier = hardShootRangeMultiplier;
+			m_hardShootIntervalMultiplier = hardShootIntervalMultiplier;
+		}
+
+		public void SetDifficulty(BotDifficulty difficulty)
+		{
+			m_difficulty = difficulty;
 		}
 
 		public void Update()
@@ -156,18 +178,43 @@ namespace Golf.GamePlay
 				spawnPosition,
 				spawnRotation);
 
+			GetDifficultyParameters(
+				out int health,
+				out float shootRange,
+				out float shootInterval);
+
 			var enemyShip = new EnemyShip(
 				enemyObject,
 				m_playerShipTransform,
 				m_cannonballPrefab,
-				m_enemyHealth,
+				health,
 				m_enemyMoveSpeed,
 				m_enemyTurnSpeed,
 				m_enemyCombatDistance,
-				m_enemyShootRange,
-				m_enemyShootInterval);
+				shootRange,
+				shootInterval,
+				m_seaCollider);
 
 			m_enemies.Add(enemyShip);
+		}
+
+		private void GetDifficultyParameters(
+			out int health,
+			out float shootRange,
+			out float shootInterval)
+		{
+			if (m_difficulty == BotDifficulty.Hard)
+			{
+				health = m_baseEnemyHealth + m_hardExtraHealth;
+				shootRange = m_baseEnemyShootRange * m_hardShootRangeMultiplier;
+				shootInterval = m_baseEnemyShootInterval * m_hardShootIntervalMultiplier;
+			}
+			else
+			{
+				health = m_baseEnemyHealth;
+				shootRange = m_baseEnemyShootRange;
+				shootInterval = m_baseEnemyShootInterval;
+			}
 		}
 
 		private void UpdateEnemyShooting()
@@ -179,6 +226,7 @@ namespace Golf.GamePlay
 				if (ball != null)
 				{
 					m_enemyCannonballs.Add(ball);
+					onEnemyShot?.Invoke();
 				}
 			}
 		}
@@ -221,8 +269,13 @@ namespace Golf.GamePlay
 					if (enemy.CheckHit(ball.position, 0.6f))
 					{
 						bool wasSinking = enemy.isSinking;
+						float dx = ball.position.x - ball.launchPosition.x;
+						float dz = ball.position.z - ball.launchPosition.z;
+						float shotDistance = Mathf.Sqrt(dx * dx + dz * dz);
+
 						enemy.TakeDamage(1);
 						ball.Expire();
+						onEnemyHit?.Invoke(shotDistance);
 
 						if (!wasSinking && enemy.isSinking)
 						{

@@ -40,6 +40,11 @@ namespace Golf.GamePlay
 			m_startPitch = startAngles.x > 180f ? startAngles.x - 360f : startAngles.x;
 		}
 
+		public void SetSensitivity(float sensitivity)
+		{
+			m_sensitivity = sensitivity;
+		}
+
 		public void StopDragging()
 		{
 			m_isDragging = false;

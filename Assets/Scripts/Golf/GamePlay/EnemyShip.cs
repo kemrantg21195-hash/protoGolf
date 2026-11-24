@@ -12,6 +12,7 @@ namespace Golf.GamePlay
 		private Collider[] m_colliders;
 		private Transform m_targetShip;
 		private GameObject m_cannonballPrefab;
+		private Collider m_seaCollider;
 		private int m_health;
 		private float m_moveSpeed;
 		private float m_turnSpeed;
@@ -36,13 +37,15 @@ namespace Golf.GamePlay
 			float turnSpeed,
 			float combatDistance,
 			float shootRange,
-			float shootInterval)
+			float shootInterval,
+			Collider seaCollider = null)
 		{
 			m_gameObject = gameObject;
 			m_transform = gameObject.transform;
 			m_colliders = gameObject.GetComponentsInChildren<Collider>();
 			m_targetShip = targetShip;
 			m_cannonballPrefab = cannonballPrefab;
+			m_seaCollider = seaCollider;
 			m_health = maxHealth;
 			m_moveSpeed = moveSpeed;
 			m_turnSpeed = turnSpeed;
@@ -171,7 +174,7 @@ namespace Golf.GamePlay
 				rb.AddForce(launchVelocity, ForceMode.VelocityChange);
 			}
 
-			return new Cannonball(ballObject, rb);
+			return new Cannonball(ballObject, rb, m_seaCollider);
 		}
 
 		public void FixedUpdate(float fixedDeltaTime)

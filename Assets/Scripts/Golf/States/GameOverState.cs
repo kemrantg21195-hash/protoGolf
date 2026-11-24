@@ -14,6 +14,7 @@ namespace Golf.States
 		private ShipMover m_shipMover;
 		private EnemySpawner m_enemySpawner;
 		private PlayerShipHealth m_playerHealth;
+		private ScoreCounter m_scoreCounter;
 
 		public GameOverState(
 			StateMachine stateMachine,
@@ -22,7 +23,8 @@ namespace Golf.States
 			PlayerCannon playerCannon,
 			ShipMover shipMover,
 			EnemySpawner enemySpawner,
-			PlayerShipHealth playerHealth)
+			PlayerShipHealth playerHealth,
+			ScoreCounter scoreCounter)
 		{
 			m_stateMachine = stateMachine;
 			m_gameOverView = gameOverView;
@@ -31,13 +33,14 @@ namespace Golf.States
 			m_shipMover = shipMover;
 			m_enemySpawner = enemySpawner;
 			m_playerHealth = playerHealth;
+			m_scoreCounter = scoreCounter;
 		}
 
 		public void Enter()
 		{
 			Time.timeScale = 0f;
 			m_gameOverView.onMainMenuClicked += OnMainMenuClickedHandler;
-			m_gameOverView.Show();
+			m_gameOverView.Show(m_scoreCounter.currentScore);
 		}
 
 		public void Exit()
@@ -55,6 +58,7 @@ namespace Golf.States
 			m_shipMover.ResetToStart();
 			m_enemySpawner.ClearAll();
 			m_playerHealth.ResetHealth();
+			m_scoreCounter.ResetScore();
 			m_stateMachine.ChangeState<MainMenuState>();
 		}
 	}

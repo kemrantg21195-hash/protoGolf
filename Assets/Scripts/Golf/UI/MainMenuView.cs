@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,31 +8,53 @@ namespace Golf.UI
 	public class MainMenuView
 	{
 		public event Action onPlayClicked;
+		public event Action onSettingsClicked;
 
-		private readonly GameObject m_menuPanel;
-		private readonly Button m_playButton;
+		private GameObject m_panel;
+		private Button m_playButton;
+		private Button m_settingsButton;
+		private TMP_Text m_bestScoreText;
 
-		public MainMenuView(GameObject menuPanel, Button playButton)
+		public MainMenuView(
+			GameObject panel,
+			Button playButton,
+			Button settingsButton,
+			TMP_Text bestScoreText = null)
 		{
-			m_menuPanel = menuPanel;
+			m_panel = panel;
 			m_playButton = playButton;
+			m_settingsButton = settingsButton;
+			m_bestScoreText = bestScoreText;
 		}
 
-		public void Show()
+		public void Show(int bestScore)
 		{
-			m_menuPanel.SetActive(true);
-			m_playButton.onClick.AddListener(OnPlayButtonClickedHandler);
+			m_panel.SetActive(true);
+
+			if (m_bestScoreText != null)
+			{
+				m_bestScoreText.text = $"Лучший счёт: {bestScore}";
+			}
+
+			m_playButton.onClick.AddListener(OnPlayButtonClick);
+			m_settingsButton.onClick.AddListener(OnSettingsButtonClick);
 		}
 
 		public void Hide()
 		{
-			m_playButton.onClick.RemoveListener(OnPlayButtonClickedHandler);
-			m_menuPanel.SetActive(false);
+			m_playButton.onClick.RemoveListener(OnPlayButtonClick);
+			m_settingsButton.onClick.RemoveListener(OnSettingsButtonClick);
+			m_panel.SetActive(false);
 		}
 
-		private void OnPlayButtonClickedHandler()
+		private void OnPlayButtonClick()
 		{
 			onPlayClicked?.Invoke();
+		}
+
+		private void OnSettingsButtonClick()
+		{
+			onSettingsClicked?.Invoke();
 		}
 	}
 }
